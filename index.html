@@ -121,8 +121,10 @@
 
         function onDragEnd() {
             var lngLat = studentMarker.getLngLat();
+            addAddress();
             console.log(lngLat);
         }
+
         studentMarker.on('dragend', onDragEnd);
         
         map.on('load', function() {
