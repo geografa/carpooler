@@ -32,6 +32,29 @@
         background:#3887be;
         pointer-events: none;
       }
+      .mapboxgl-popup {
+        top: -16px;
+      }
+      .mapboxgl-popup-content {
+        border-radius: 10px;
+        color: #ffffff;
+        background: #1f6cd4;
+      }
+      .mapboxgl-popup-content a {
+        color: #ffffff;
+        font-size: 1.2em;
+        line-height: 2em;
+        text-decoration: none;
+      }
+      .mapboxgl-popup-content h2  {
+        margin: 5px;
+      }
+      .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+        border-top-color: #1f6cd4;
+      }
+      .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+        border-bottom-color: #1f6cd4; 
+      }
     </style>
   </head>
   <body>
@@ -97,6 +120,12 @@
             .setLngLat(student)
             .addTo(map);
 
+        function onDragEnd() {
+            var lngLat = studentMarker.getLngLat();
+            console.log(lngLat);
+        }
+        studentMarker.on('dragend', onDragEnd);
+        
         map.on('load', function() {
 
           map.addSource('single-point', {
@@ -128,6 +157,7 @@
             // Change the cursor style as a UI indicator.
             map.getCanvas().style.cursor = 'pointer';
 
+
             var coordinates = e.features[0].geometry.coordinates.slice();
             // var description = e.features[0].properties.description;
 
@@ -141,7 +171,7 @@
             // Populate the popup and set its coordinates
             // based on the feature found.
             popup.setLngLat(coordinates)
-                .setHTML('<a href="#" onclick="addAddress()">Add stop</a>')
+                .setHTML('<a href="#" onclick="addAddress()"><button>ADD PICKUP</button></a>')
                 .addTo(map);
           });
 
