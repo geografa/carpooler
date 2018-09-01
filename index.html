@@ -90,6 +90,8 @@
 
         var bounds = [[-123.71335832252835,45.25971894392549],[-121.65150609073802,45.79798892888519]];
         map.setMaxBounds(bounds);
+        map.dragRotate.disable();
+
 
         var geocoder = new MapboxGeocoder({
             accessToken: mapboxgl.accessToken
