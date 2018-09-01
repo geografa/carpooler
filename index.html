@@ -73,8 +73,8 @@
 
     <div id='map' class='contain'></div>
     <script>
-        var student = [-122.6448525564042,45.56475241170219];
-        var school = [-122.65144974522434,45.52559687209856];
+        var student = [-122.6448525564042,45.56475241170219]; // starting
+        var school = [-122.64859379622163,45.520005806519976]; //destination
         var pointHopper = {};
         
         // Add your access token
@@ -88,12 +88,14 @@
           zoom: 12 // starting zoom
         });
 
+        var bounds = [[-123.71335832252835,45.25971894392549],[-121.65150609073802,45.79798892888519]];
+        map.setMaxBounds(bounds);
+
         var geocoder = new MapboxGeocoder({
             accessToken: mapboxgl.accessToken
         });
 
         map.addControl(geocoder);
-
 
         var stop = turf.featureCollection([turf.point(school)]);
         
@@ -121,7 +123,7 @@
 
         function onDragEnd() {
             var lngLat = studentMarker.getLngLat();
-            addAddress();
+            addMarkerAddress();
             console.log(lngLat);
         }
 
@@ -172,7 +174,7 @@
             // Populate the popup and set its coordinates
             // based on the feature found.
             popup.setLngLat(coordinates)
-                .setHTML('<a href="#" onclick="addAddress()"><button>ADD PICKUP</button></a>')
+                .setHTML('<a href="#" onclick="addPopupAddress()"><button>ADD PICKUP</button></a>')
                 .addTo(map);
           });
 
@@ -380,8 +382,14 @@
         updateDropoffs(dropoffs);
       });
 
-      function addAddress () {
+      function addPopupAddress () {
         var coords = popup.getLngLat();
+        newDropoff(coords);
+        updateDropoffs(dropoffs);
+      }
+
+      function addMarkerAddress () {
+        var coords = studentMarker.getLngLat();
         newDropoff(coords);
         updateDropoffs(dropoffs);
       }
