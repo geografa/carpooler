@@ -1,400 +1,75 @@
-
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='utf-8' />
-    <title>Carpool App</title>
-    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
-    <style>
-      body {
-        margin:0;
-        padding:0;
-      }
+<head>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <meta charset=utf-8 />
+  <title>Mapbox -- Optimization API</title>
+  <link rel='shortcut icon' href='path/to/favicon.ico' type='image/x-icon' />
+  <!--   GL-JS CSS -->
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.css' rel='stylesheet' />
+  <!--  ASSEMBLY -->
+  <link href='https://api.mapbox.com/mapbox-assembly/v0.6.0/assembly.min.css' rel='stylesheet'>
+  <script async defer src='https://api.mapbox.com/mapbox-assembly/v0.6.0/assembly.js'></script>
+  <link href="https://api.mapbox.com/mapbox-assembly/mapbox-addon/v0.3.0/assembly.min.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-assembly/mapbox-addon/v0.3.0/assembly.js"></script>
+  <!-- GEOCODER -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.0.1/mapbox-gl-geocoder.js'></script>
+  <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.0.1/mapbox-gl-geocoder.css' type='text/css' />
+  <!--   CUSTOM STYLES -->
+  <link href='main.css' rel='stylesheet' />
+</head>
+<body>
+  <div class='viewport-full relative clip'>
+    <!-- Map -->
+    <div id='map' class='viewport-twothirds viewport-full-ml absolute top left right bottom'></div>
 
-      #map { 
-        position:absolute; 
-        top:0; 
-        bottom:0; 
-        right:0px; 
-        left:0px;  
-        background:black;
-      }
-      
-      .home{
-        width:50px;
-        height:50px;
-        border:2px solid #fff;
-        border-radius:50%;
-        background:#3887be;
-        pointer-events: none;
-      }
-      .mapboxgl-popup {
-        top: -16px;
-      }
-      .mapboxgl-popup-content {
-        border-radius: 10px;
-        color: #ffffff;
-        background: #1f6cd4;
-      }
-      .mapboxgl-popup-content a {
-        color: #ffffff;
-        font-size: 1.2em;
-        line-height: 2em;
-        text-decoration: none;
-      }
-      .mapboxgl-popup-content h2  {
-        margin: 5px;
-      }
-      .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
-        border-top-color: #1f6cd4;
-      }
-      .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
-        border-bottom-color: #1f6cd4; 
-      }
-    </style>
-  </head>
-  <body>
-    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.min.js'></script>
-    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.css' type='text/css' />
-    <style>
-      #geocoder-container > div {
-        min-width:50%;
-        margin-left:25%;
-      }
-      .mapboxgl-popup {
-        max-width: 400px;
-        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-      }
-    </style>
+    <!-- Map Spinner -->
+    <div id='map-spinner' class='loading spinner-center none'></div>
 
-    <div id='map' class='contain'></div>
-    <script>
-        var student = [-122.6448525564042,45.56475241170219]; // starting
-        var school = [-122.64859379622163,45.520005806519976]; //destination
-        var pointHopper = {};
-        
-        // Add your access token
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZ3JhZmEiLCJhIjoiY2psZWQ0aTRyMDFzYjNwazlnNHIwZDA2ayJ9.26ShVjFQWn_y3oU_O3o2Sw';
+    <div class='absolute top-ml left bottom z1 w-full w300-ml p12-ml'>
+      <div class='flex-parent flex-parent--column viewport-third h-auto-ml hmax-mm bg-white round-bold shadow-darken5'>
+      <!--  Sidebar -->
+        <div id='scroll-sidebar' class='relative scroll-auto round-bold'>
+          <div id='intro' class='p12'>
+            <div class='fl'>
+              <img src="img/flower-delivery-2.svg" alt="flower-delivery" class='flex-child w36'>
+            </div>
+            <p class='ml48 color-white txt-bold txt-s'>Optimize your carpool</p>
+            <p class='ml48 color-white color-lighten50 txt-s'>Click on the map to add stops to get started!</p>  
+          </div>
 
-        // Initialize a map
-        var map = new mapboxgl.Map({
-          container: 'map', // container id
-          style: 'mapbox://styles/grafa/cjlecyrxd68v02qp9n6o6jndn', // stylesheet location
-          center: [-122.64732514965215,45.54803052226447], // starting position
-          zoom: 12 // starting zoom
-        });
+          <div id='info'>
+          <!-- Spinner -->
+          <div id='spinner-div' class='loading my12 none'></div>
 
-        var bounds = [[-123.71335832252835,45.25971894392549],[-121.65150609073802,45.79798892888519]];
-        map.setMaxBounds(bounds);
-        map.dragRotate.disable();
+          <div id='info-wrapper' class='none border-t border--white'>
+            <div class='flex-parent flex-parent--row'>
+              <div class='flex-child flex-child--grow total-trips align-center txt-l mr2'>
+                <div class='total-trips txt-l align-center p12'>
+                  <span id='total-stops' class='txt-bold block mb-neg12'></span>
+                  <span class='txt-s color-light-teal'>Pickups</span>
+                </div>  
+              </div>
+              <div class='flex-child flex-child--grow total-trips align-center txt-l mr2'>
+                <div class='total-trips txt-l align-center p12'>
+                  <span id='total-time' class='txt-bold block mb-neg12'></span>
+                  <span class='txt-s color-light-teal'>Minutes</span>
+                </div>
+              </div>
+              <div class='flex-child flex-child--grow'>
+                <div class='total-trips txt-l align-center p12'>
+                  <span id='total-distance' class='txt-bold block mb-neg12'></span>
+                  <span class='txt-s color-light-teal'>Miles</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-
-        var geocoder = new MapboxGeocoder({
-            accessToken: mapboxgl.accessToken
-        });
-
-        map.addControl(geocoder);
-
-        var stop = turf.featureCollection([turf.point(school)]);
-        
-        // Create an empty GeoJSON feature collection for drop off locations
-        var dropoffs = turf.featureCollection([]);
-
-        // Create an empty GeoJSON feature collection, which will be used as the data source for the route before users add any new data
-        var nothing = turf.featureCollection([]);
-                  // Create a popup, but don't add it to the map yet.
-        var popup = new mapboxgl.Popup({
-            closeButton: true,
-            closeOnClick: true
-        });
-
-        var marker = document.createElement('div');
-        marker.classList = 'home';
-
-        marker.style.backgroundImage = 'url(https://i.imgur.com/YcesxAZ.png)';
-
-        var studentMarker = new mapboxgl.Marker({
-            draggable: true
-        })
-            .setLngLat(student)
-            .addTo(map);
-
-        function onDragEnd() {
-            var lngLat = studentMarker.getLngLat();
-            addMarkerAddress();
-            console.log(lngLat);
-        }
-
-        studentMarker.on('dragend', onDragEnd);
-        
-        map.on('load', function() {
-
-          map.addSource('single-point', {
-              "type": "geojson",
-              "data": {
-                  "type": "FeatureCollection",
-                  "features": []
-              }
-          });
-
-          map.addLayer({
-              "id": "point",
-              "source": "single-point",
-              "type": "circle",
-              "paint": {
-                  "circle-radius": 15,
-                  "circle-color": "#1f6cd4"
-              }
-          });
-
-          // Listen for the `result` event from the MapboxGeocoder that is triggered when a user
-          // makes a selection and add a symbol that matches the result.
-          geocoder.on('result', function(ev) {
-              map.getSource('single-point').setData(ev.result.geometry);
-          });
-
-
-          map.on('mouseenter', 'point', function(e) {
-            // Change the cursor style as a UI indicator.
-            map.getCanvas().style.cursor = 'pointer';
-
-
-            var coordinates = e.features[0].geometry.coordinates.slice();
-            // var description = e.features[0].properties.description;
-
-            // Ensure that if the map is zoomed out such that multiple
-            // copies of the feature are visible, the popup appears
-            // over the copy being pointed to.
-            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-            }
-
-            // Populate the popup and set its coordinates
-            // based on the feature found.
-            popup.setLngLat(coordinates)
-                .setHTML('<a href="#" onclick="addPopupAddress()"><button>ADD PICKUP</button></a>')
-                .addTo(map);
-          });
-
-          map.on('mouseleave', 'point', function() {
-              map.getCanvas().style.cursor = '';
-              // popup.remove();
-          });
-
-          // Add the school
-          // Create a circle layer
-          map.addLayer({
-            id: 'stop',
-            type: 'circle',
-            source: {
-              data: stop,
-              type: 'geojson'
-            },
-            paint: {
-              'circle-radius': 20,
-              'circle-color': 'white',
-              'circle-stroke-color': '#3887be',
-              'circle-stroke-width': 3
-            }
-          });
-
-          // Create a symbol layer on top of circle layer
-          map.addLayer({
-            id: 'stop-symbol',
-            type: 'symbol',
-            source: {
-              data: stop,
-              type: 'geojson'
-            },
-            layout: {
-              'icon-image': 'college-15',
-              'icon-size': 1
-            },
-            paint: {
-              'text-color': '#333'
-            }
-          });
-
-          // Add the pickups
-          map.addLayer({
-            id: 'dropoffs',
-            type: 'circle',
-            source: {
-              data: dropoffs,
-              type: 'geojson'
-            },
-            paint: {
-              'circle-radius': 15,
-              'circle-color': 'white',
-              'circle-stroke-color': '#3887be',
-              'circle-stroke-width': 3
-            }
-          });
-
-          // Create a symbol layer on top of circle layer
-          map.addLayer({
-            id: 'dropoffs-symbol',
-            type: 'symbol',
-            source: {
-              data: dropoffs,
-              type: 'geojson'
-            },
-            layout: {
-              'icon-allow-overlap': true,
-              'icon-image': 'toilet-15',
-              'icon-size': 1
-            },
-            paint: {
-              'text-color': '#333'
-            }
-          });
-
-          map.addSource('route', {
-            type: 'geojson',
-            data: nothing
-          });
-
-          map.addLayer({
-            id:'routeline-active',
-            type:'line',
-            source: 'route',
-            layout:{
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint:{
-              'line-color': '#3887be',
-              'line-width': {
-                base:1,
-                stops:[[12, 3], [22, 12]]
-              }
-            }
-          }, 'waterway-label');
-
-          map.addLayer({
-            id: 'routearrows',
-            type: 'symbol',
-            source: 'route',
-            layout: {
-              'symbol-placement': 'line',
-              'text-field': '▶',
-              'text-size': {
-                base: 1,
-                stops: [[12, 24], [22, 60]]
-              },
-              'symbol-spacing': {
-                base: 1,
-                stops: [[12, 30], [22, 160]]
-              },
-              'text-keep-upright': false
-            },
-            paint: {
-              'text-color': '#3887be',
-              'text-halo-color': 'hsl(55, 11%, 96%)',
-              'text-halo-width': 3
-            }
-          }, 'waterway-label');
-        });
-
-        function newDropoff(coords) {
-          // Store the clicked point as a new GeoJSON feature with
-          // two properties: `orderTime` and `key`
-          var pt = turf.point(
-            [coords.lng, coords.lat],
-            {
-              orderTime: Date.now(),
-              key: Math.random()
-            }
-          );
-          dropoffs.features.push(pt);
-          pointHopper[pt.properties.key] = pt;
-
-          // Make a request to the Optimization API
-          $.ajax({
-            method: 'GET',
-            url: assembleQueryURL(),
-          }).done(function(data) {
-            
-            // Create a GeoJSON feature collection
-            var routeGeoJSON = turf.featureCollection([turf.feature(data.trips[0].geometry)]);
-
-            // If there is no route provided, reset
-            if (!data.trips[0]) {
-              routeGeoJSON = nothing;
-            } else {
-              // Update the `route` source by getting the route source 
-              // and setting the data equal to routeGeoJSON
-              map.getSource('route')
-                .setData(routeGeoJSON);
-            }
-
-            // 
-            if (data.waypoints.length === 12) {
-              window.alert('Maximum number of points reached. Read more at mapbox.com/api-documentation/#optimization.');
-            }
-          });
-        }
-
-      function updateDropoffs(geojson) {
-        map.getSource('dropoffs')
-          .setData(geojson);
-        map.getSource('dropoffs-symbol')
-          .setData(geojson);
-      }
-
-      // Here you'll specify all the parameters necessary for requesting a response from the Optimization API
-      function assembleQueryURL() {
-
-        // Store the location of the students in a variable called coordinates
-        var coords = studentMarker.getLngLat().lng + ',' + studentMarker.getLngLat().lat;
-        var coordinates = [coords];
-
-        // Create an array of GeoJSON feature collections for each point
-        var restJobs = objectToArray(pointHopper);
-
-        // If there are actually orders from this restaurant
-        if (restJobs.length > 0) {
-          restJobs.forEach(function(d, i) {
-            // Add dropoff to list
-            coordinates.push(d.geometry.coordinates);
-          });
-        }
-
-        return 'https://api.mapbox.com/optimized-trips/v1/mapbox/driving/' + coordinates.join(';') + ';' + school + '?source=first&destination=last&geometries=geojson&roundtrip=false&access_token=' + mapboxgl.accessToken;
-      }
-
-      function objectToArray(obj) {
-        var keys = Object.keys(obj);
-        var routeGeoJSON = keys.map(function(key) {
-          return obj[key];
-        });
-        return routeGeoJSON;
-      }
-
-      // Listen for a click on the map
-      map.on('click', function(e) {
-        // When the map is clicked, add a new drop off point
-        // and update the `dropoffs-symbol` layer
-        newDropoff(map.unproject(e.point));
-        updateDropoffs(dropoffs);
-      });
-
-      function addPopupAddress () {
-        var coords = popup.getLngLat();
-        newDropoff(coords);
-        updateDropoffs(dropoffs);
-      }
-
-      function addMarkerAddress () {
-        var coords = studentMarker.getLngLat();
-        newDropoff(coords);
-        updateDropoffs(dropoffs);
-      }
-
-    </script>
-  </body>
+  <a class='mb-attribution absolute bottom m6' target='_blank' href='https://www.mapbox.com/'></a>
+  <script src='bundle.js'></script>
+</body>
 </html>
