@@ -23,7 +23,10 @@ var total_stops = document.getElementById('total-stops'),
   sonarMarker,
   trip;
 
-// mapbox.mapbox-traffic-v1
+var bounds = [
+    [-123.2238762601873, 45.34774165498007], // Southwest coordinates
+    [-121.96865160547848, 45.676905323738026]  // Northeast coordinates
+];
 
 var map = new mapboxgl.Map({
   container: 'map', 
@@ -31,8 +34,13 @@ var map = new mapboxgl.Map({
   center: [-122.67773866653444,45.52245801087795], 
   zoom: 12.5,
   maxZoom: 17,
-  minZoom: 12
+  minZoom: 9,
+  // maxBounds: bounds
 });
+
+map.addControl(new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken
+}));
 
 var canvas = map.getCanvasContainer();
 
@@ -47,20 +55,17 @@ var origin_feature = {
   }]
 };
 function mouseDown() {
-  if (!isCursorOverPoint) return;
+// Prevent the default map drag behavior.
+  e.preventDefault();
 
-  isDragging = true;
-  // Remove sonar marker from map
-  sonarMarker.remove();
-  // Set a cursor indicator
   canvas.style.cursor = 'grab';
 
-  // Mouse events
   map.on('mousemove', onMove);
   map.once('mouseup', onUp);
 }
+
+// update marker location
 function onMove(e) {
-  if (!isDragging) return;
   var coords = e.lngLat;
 
   // Set a UI indicator for dragging.
@@ -72,8 +77,8 @@ function onMove(e) {
   map.getSource('trip-origin-casing').setData(origin_feature);
   map.getSource('trip-origin').setData(origin_feature);
 }
+
 function onUp(e) {
-  if (!isDragging) return;
   var coords = e.lngLat;
 
   canvas.style.cursor = '';
@@ -94,10 +99,13 @@ function onUp(e) {
   }
   // Unbind mouse events
   map.off('mousemove', onMove);
+  map.off('touchmove', onMove);
 }
+
 function tripOrigin(origin_coords) {
   return origin_coords.join(',');
 }
+
 function buildSidebar(trip) {
   // Extract the info you need from trip
   var waypoints = trip.waypoints.length;
@@ -218,7 +226,7 @@ map.on('load', function(){
    "type": "circle",    
    "paint": {   
      "circle-color": "#fff",    
-     "circle-radius": 8   
+     "circle-radius": 10
     }    
   });
   map.addSource('trip-origin', {
@@ -230,7 +238,7 @@ map.on('load', function(){
     "source": "trip-origin",   
   "type": "circle",    
     "paint": {   
-      "circle-color": '#00626e',   
+      "circle-color": '#f25c5c',   
       "circle-radius": 6   
     }    
   });
@@ -305,32 +313,39 @@ map.on('load', function(){
   var divSonar = document.createElement('div');
   divSonar.classList.add('sonar-marker');
 
-  sonarMarker = new mapboxgl.Marker(divSonar, {
-    offset: [-10, -10]
-  }).setLngLat(origin_coords)
+  sonarMarker = new mapboxgl.Marker(divSonar).setLngLat(origin_coords)
     .addTo(map);
 
-  // If a feature is found on map movement,
-  // set a flag to permit a mousedown events.
-  map.on('mousemove', function(e) {
-    var origin_features = map.queryRenderedFeatures(e.point, { layers: ['trip-origin-casing-layer', 'trip-origin-layer'] });
-    // Change point and cursor style as a UI indicator
-    // and set a flag to enable other mouse events.
-    if (origin_features.length) {
-      map.setPaintProperty('trip-origin-layer', 'circle-color', '#23d2be');
+  map.on('mouseenter', 'trip-origin-casing-layer', function() {
+      map.setPaintProperty('trip-origin-casing-layer', 'circle-color', '#ddd');
       canvas.style.cursor = 'move';
-      isCursorOverPoint = true;
-      map.dragPan.disable();
-    } else {
-      map.setPaintProperty('trip-origin-layer', 'circle-color', '#23d2be');
-      canvas.style.cursor = '';
-      isCursorOverPoint = false;
-      map.dragPan.enable();
-    }
   });
-  // Set `true` to dispatch the event before other functions call it. This
-  // is necessary for disabling the default map dragging behaviour.
-  map.on('mousedown', mouseDown, true);
+
+  map.on('mouseleave', 'trip-origin-casing-layer', function() {
+      map.setPaintProperty('trip-origin-casing-layer', 'circle-color', '#f25c5c');
+      canvas.style.cursor = '';
+  });
+
+  map.on('mousedown', 'trip-origin-layer', function(e) {
+      // Prevent the default map drag behavior.
+      e.preventDefault();
+
+      canvas.style.cursor = 'grab';
+
+      map.on('mousemove', onMove);
+      map.once('mouseup', onUp);
+  });
+
+  map.on('touchstart', 'trip-origin-layer', function(e) {
+      if (e.points.length !== 1) return;
+
+      // Prevent the default map drag behavior.
+      e.preventDefault();
+
+      map.on('touchmove', onMove);
+      map.once('touchend', onUp);
+  });
+
 });
 
 // Add points on click (if not dragging point)
